@@ -269,25 +269,14 @@ export class ResolutionSession {
    * Get the binding path as `bindingA --> bindingB --> bindingC`.
    */
   getBindingPath() {
-    return this.bindingStack.map(b => b.key).join(' --> ');
+    return this.stack.filter(isBinding).map(describe).join(' --> ');
   }
 
   /**
    * Get the injection path as `injectionA --> injectionB --> injectionC`.
    */
   getInjectionPath() {
-    return this.injectionStack
-      .map(i => ResolutionSession.describeInjection(i).targetName)
-      .join(' --> ');
-  }
-
-  private static describe(e: ResolutionElement) {
-    switch (e.type) {
-      case 'injection':
-        return '@' + ResolutionSession.describeInjection(e.value).targetName;
-      case 'binding':
-        return e.value.key;
-    }
+    return this.stack.filter(isInjection).map(describe).join(' --> ');
   }
 
   /**
@@ -296,11 +285,20 @@ export class ResolutionSession {
    * --> bindingC`.
    */
   getResolutionPath() {
-    return this.stack.map(i => ResolutionSession.describe(i)).join(' --> ');
+    return this.stack.map(describe).join(' --> ');
   }
 
   toString() {
     return this.getResolutionPath();
+  }
+}
+
+function describe(e: ResolutionElement) {
+  switch (e.type) {
+    case 'injection':
+      return '@' + ResolutionSession.describeInjection(e.value).targetName;
+    case 'binding':
+      return e.value.key;
   }
 }
 
