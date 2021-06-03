@@ -224,13 +224,9 @@ export function filterByKey(
   if (typeof keyPattern === 'string') {
     const regex = wildcardToRegExp(keyPattern);
     return binding => regex.test(binding.key);
-  }
-
-  if (keyPattern instanceof RegExp) {
+  } else if (keyPattern instanceof RegExp) {
     return binding => keyPattern.test(binding.key);
-  }
-
-  if (typeof keyPattern === 'function') {
+  } else if (typeof keyPattern === 'function') {
     return keyPattern;
   }
   return () => true;
