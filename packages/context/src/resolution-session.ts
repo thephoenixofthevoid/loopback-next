@@ -72,11 +72,27 @@ function isInjection(
  * dependencies within a context
  */
 export class ResolutionSession {
+  constructor(
+    private parent: ResolutionSession | null = null,
+    private element: ResolutionElement | null = null,
+  ) {}
+
+  static getStack(current: ResolutionSession) {
+    const result = [];
+    while (current?.parent !== null) {
+      result.unshift(current.element!);
+      current = current.parent;
+    }
+    return result;
+  }
+
   /**
    * A stack of bindings for the current resolution session. It's used to track
    * the path of dependency resolution and detect circular dependencies.
    */
-  readonly stack: ResolutionElement[] = [];
+  get stack(): ResolutionElement[] {
+    return ResolutionSession.getStack(this);
+  }
 
   /**
    * Fork the current session so that a new one with the same stack can be used
@@ -85,10 +101,7 @@ export class ResolutionSession {
    * @param session - The current session
    */
   static fork(session?: ResolutionSession): ResolutionSession | undefined {
-    if (session === undefined) return undefined;
-    const copy = new ResolutionSession();
-    copy.stack.push(...session.stack);
-    return copy;
+    return session;
   }
 
   /**
@@ -102,10 +115,9 @@ export class ResolutionSession {
     element: ResolutionElement,
     session = new ResolutionSession(),
   ) {
-    session.stack.push(element);
     return tryWithFinally(
-      () => action(session),
-      () => session.stack.pop(),
+      () => action(new ResolutionSession(session, element)),
+      () => {},
     );
   }
 

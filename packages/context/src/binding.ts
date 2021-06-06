@@ -572,13 +572,17 @@ export class Binding<T = BoundValue> extends EventEmitter {
     options: ResolutionOptions,
     value: ValueOrPromise<T>,
   ): ValueOrPromise<T> {
-    const session = options.session!;
-    session.stack.push({type: 'binding', value: this});
     return Binding.valueOrProxy(
       {
         context: resolutionCtx,
         binding: this,
-        options,
+        options: {
+          ...options,
+          session: new ResolutionSession(options.session!, {
+            type: 'binding',
+            value: this,
+          }),
+        },
       },
       value,
     );
