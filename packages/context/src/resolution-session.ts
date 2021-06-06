@@ -154,17 +154,17 @@ export class ResolutionSession {
    */
   pushInjection(injection: Readonly<Injection>) {
     /* istanbul ignore if */
-    if (debugSession.enabled) {
-      debugSession(
-        'Enter injection:',
-        ResolutionSession.describeInjection(injection),
-      );
-    }
+    //if (debugSession.enabled) {
+    //  debugSession(
+    //    'Enter injection:',
+    //    ResolutionSession.describeInjection(injection),
+    //  );
+    //}
     this.stack.push({type: 'injection', value: injection});
     /* istanbul ignore if */
-    if (debugSession.enabled) {
-      debugSession('Resolution path:', this.getResolutionPath());
-    }
+    //if (debugSession.enabled) {
+    //  debugSession('Resolution path:', this.getResolutionPath());
+    //}
   }
 
   /**
@@ -172,19 +172,19 @@ export class ResolutionSession {
    */
   popInjection() {
     const top = this.stack.pop();
-    if (!isInjection(top)) {
-      throw new Error('The top element must be an injection');
-    }
+    //if (!isInjection(top)) {
+    //  throw new Error('The top element must be an injection');
+    //}
 
-    const injection = top.value;
+    const injection = top?.value;
     /* istanbul ignore if */
-    if (debugSession.enabled) {
-      debugSession(
-        'Exit injection:',
-        ResolutionSession.describeInjection(injection),
-      );
-      debugSession('Resolution path:', this.getResolutionPath() || '<empty>');
-    }
+    //if (debugSession.enabled) {
+    //  debugSession(
+    //    'Exit injection:',
+    //    ResolutionSession.describeInjection(injection),
+    //  );
+    //  debugSession('Resolution path:', this.getResolutionPath() || '<empty>');
+    //}
     return injection;
   }
 
@@ -216,9 +216,9 @@ export class ResolutionSession {
    */
   pushBinding(binding: Readonly<Binding>) {
     /* istanbul ignore if */
-    if (debugSession.enabled) {
-      debugSession('Enter binding:', binding.toJSON());
-    }
+    //if (debugSession.enabled) {
+    //  debugSession('Enter binding:', binding.toJSON());
+    //}
 
     if (this.stack.find(i => isBinding(i) && i.value === binding)) {
       const msg =
@@ -229,9 +229,9 @@ export class ResolutionSession {
     }
     this.stack.push({type: 'binding', value: binding});
     /* istanbul ignore if */
-    if (debugSession.enabled) {
-      debugSession('Resolution path:', this.getResolutionPath());
-    }
+    //if (debugSession.enabled) {
+    //  debugSession('Resolution path:', this.getResolutionPath());
+    //}
   }
 
   /**
@@ -242,12 +242,12 @@ export class ResolutionSession {
     if (!isBinding(top)) {
       throw new Error('The top element must be a binding');
     }
-    const binding = top.value;
+    const binding = top?.value;
     /* istanbul ignore if */
-    if (debugSession.enabled) {
-      debugSession('Exit binding:', binding?.toJSON());
-      debugSession('Resolution path:', this.getResolutionPath() || '<empty>');
-    }
+    //if (debugSession.enabled) {
+    //  debugSession('Exit binding:', binding?.toJSON());
+    //  debugSession('Resolution path:', this.getResolutionPath() || '<empty>');
+    //}
     return binding;
   }
 
