@@ -532,7 +532,7 @@ export class Binding<T = BoundValue> extends EventEmitter {
       options,
     };
     if (typeof this._getValue === 'function') {
-      const result = ResolutionSession.runWithBinding(
+      const result = ResolutionSession.runWith(
         s => {
           const optionsWithSession = {
             ...options,
@@ -547,7 +547,7 @@ export class Binding<T = BoundValue> extends EventEmitter {
             options: optionsWithSession,
           });
         },
-        this,
+        {type: 'binding', value: this},
         options.session,
       );
       const value = this._cacheValue(resolutionCtx!, result);
@@ -573,7 +573,7 @@ export class Binding<T = BoundValue> extends EventEmitter {
     value: ValueOrPromise<T>,
   ): ValueOrPromise<T> {
     const session = options.session!;
-    session.pushBinding(this);
+    session.stack.push({type: 'binding', value: this});
     return Binding.valueOrProxy(
       {
         context: resolutionCtx,

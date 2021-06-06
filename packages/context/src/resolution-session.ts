@@ -4,14 +4,13 @@
 // License text available at https://opensource.org/licenses/MIT
 
 import {DecoratorFactory} from '@loopback/metadata';
-import debugModule from 'debug';
 import {Binding} from './binding';
 import {BindingSelector} from './binding-filter';
 import {Context} from './context';
 import {Injection, InjectionMetadata} from './inject';
 import {BoundValue, tryWithFinally, ValueOrPromise} from './value-promise';
 
-const debugSession = debugModule('loopback:context:resolver:session');
+// const debugSession = debugModule('loopback:context:resolver:session');
 const getTargetName = DecoratorFactory.getTargetName;
 
 /**
@@ -93,99 +92,21 @@ export class ResolutionSession {
   }
 
   /**
-   * Run the given action with the given binding and session
-   * @param action - A function to do some work with the resolution session
-   * @param binding - The current binding
-   * @param session - The current resolution session
-   */
-  static runWithBinding(
-    action: ResolutionAction,
-    binding: Readonly<Binding>,
-    session = new ResolutionSession(),
-  ) {
-    // Start to resolve a binding within the session
-    session.pushBinding(binding);
-    return tryWithFinally(
-      () => action(session),
-      () => session.popBinding(),
-    );
-  }
-
-  /**
    * Run the given action with the given injection and session
    * @param action - A function to do some work with the resolution session
    * @param binding - The current injection
    * @param session - The current resolution session
    */
-  static runWithInjection(
+  static runWith(
     action: ResolutionAction,
-    injection: Readonly<Injection>,
+    element: ResolutionElement,
     session = new ResolutionSession(),
   ) {
-    session.pushInjection(injection);
+    session.stack.push(element);
     return tryWithFinally(
       () => action(session),
-      () => session.popInjection(),
+      () => session.stack.pop(),
     );
-  }
-
-  /**
-   * Describe the injection for debugging purpose
-   * @param injection - Injection object
-   */
-  static describeInjection(
-    injection: Readonly<Injection>,
-  ): InjectionDescriptor {
-    const name = getTargetName(
-      injection.target,
-      injection.member,
-      injection.methodDescriptorOrParameterIndex,
-    );
-    return {
-      targetName: name,
-      bindingSelector: injection.bindingSelector,
-      metadata: injection.metadata,
-    };
-  }
-
-  /**
-   * Push the injection onto the session
-   * @param injection - Injection The current injection
-   */
-  pushInjection(injection: Readonly<Injection>) {
-    /* istanbul ignore if */
-    //if (debugSession.enabled) {
-    //  debugSession(
-    //    'Enter injection:',
-    //    ResolutionSession.describeInjection(injection),
-    //  );
-    //}
-    this.stack.push({type: 'injection', value: injection});
-    /* istanbul ignore if */
-    //if (debugSession.enabled) {
-    //  debugSession('Resolution path:', this.getResolutionPath());
-    //}
-  }
-
-  /**
-   * Pop the last injection
-   */
-  popInjection() {
-    const top = this.stack.pop();
-    //if (!isInjection(top)) {
-    //  throw new Error('The top element must be an injection');
-    //}
-
-    const injection = top?.value;
-    /* istanbul ignore if */
-    //if (debugSession.enabled) {
-    //  debugSession(
-    //    'Exit injection:',
-    //    ResolutionSession.describeInjection(injection),
-    //  );
-    //  debugSession('Resolution path:', this.getResolutionPath() || '<empty>');
-    //}
-    return injection;
   }
 
   /**
@@ -208,47 +129,6 @@ export class ResolutionSession {
       if (isBinding(element)) return element.value;
     }
     return undefined;
-  }
-
-  /**
-   * Enter the resolution of the given binding. If
-   * @param binding - Binding
-   */
-  pushBinding(binding: Readonly<Binding>) {
-    /* istanbul ignore if */
-    //if (debugSession.enabled) {
-    //  debugSession('Enter binding:', binding.toJSON());
-    //}
-
-    if (this.stack.find(i => isBinding(i) && i.value === binding)) {
-      const msg =
-        `Circular dependency detected: ` +
-        `${this.getResolutionPath()} --> ${binding.key}`;
-      debugSession(msg);
-      throw new Error(msg);
-    }
-    this.stack.push({type: 'binding', value: binding});
-    /* istanbul ignore if */
-    //if (debugSession.enabled) {
-    //  debugSession('Resolution path:', this.getResolutionPath());
-    //}
-  }
-
-  /**
-   * Exit the resolution of a binding
-   */
-  popBinding(): Readonly<Binding> {
-    const top = this.stack.pop();
-    if (!isBinding(top)) {
-      throw new Error('The top element must be a binding');
-    }
-    const binding = top?.value;
-    /* istanbul ignore if */
-    //if (debugSession.enabled) {
-    //  debugSession('Exit binding:', binding?.toJSON());
-    //  debugSession('Resolution path:', this.getResolutionPath() || '<empty>');
-    //}
-    return binding;
   }
 
   /**
@@ -293,10 +173,29 @@ export class ResolutionSession {
   }
 }
 
+/**
+ * Describe the injection for debugging purpose
+ * @param injection - Injection object
+ */
+export function describeInjection(
+  injection: Readonly<Injection>,
+): InjectionDescriptor {
+  const name = getTargetName(
+    injection.target,
+    injection.member,
+    injection.methodDescriptorOrParameterIndex,
+  );
+  return {
+    targetName: name,
+    bindingSelector: injection.bindingSelector,
+    metadata: injection.metadata,
+  };
+}
+
 function describe(e: ResolutionElement) {
   switch (e.type) {
     case 'injection':
-      return '@' + ResolutionSession.describeInjection(e.value).targetName;
+      return '@' + describeInjection(e.value).targetName;
     case 'binding':
       return e.value.key;
   }

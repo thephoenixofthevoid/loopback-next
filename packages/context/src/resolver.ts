@@ -15,6 +15,7 @@ import {
   Injection,
 } from './inject';
 import {
+  describeInjection,
   ResolutionError,
   ResolutionOptions,
   ResolutionSession,
@@ -129,14 +130,11 @@ function resolve<T>(
 ): ValueOrPromise<T> {
   /* istanbul ignore if */
   if (debug.enabled) {
-    debug(
-      'Resolving an injection:',
-      ResolutionSession.describeInjection(injection),
-    );
+    debug('Resolving an injection:', describeInjection(injection));
   }
 
   ctx = resolveContext(ctx, injection, session);
-  const resolved = ResolutionSession.runWithInjection(
+  const resolved = ResolutionSession.runWith(
     s => {
       if (injection.resolve) {
         // A custom resolve function is provided
@@ -155,7 +153,7 @@ function resolve<T>(
         return ctx.getValueOrPromise(key, options);
       }
     },
-    injection,
+    {type: 'injection', value: injection},
     session,
   );
   return resolved;
